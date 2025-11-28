@@ -29,7 +29,7 @@ const __dirname = path.dirname(__filename);
 // Connect Database
 connectDB();
 
-// Counter Initialize
+// Initialize Counter
 const initCounter = async () => {
   try {
     const counter = await Counter.findOne({ _id: "client_project_number" });
@@ -50,21 +50,33 @@ initCounter();
 
 const app = express();
 
-// -------- CORS FIX --------
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "https://crm-seven-jade.vercel.app", // deployed frontend
-    ],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
-// --------------------------
-
+// MUST COME BEFORE CORS (fixes JSON blocking)
 app.use(express.json());
+
+// ------------- FULL CORS FIX ----------------
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://crm-seven-jade.vercel.app", // your frontend
+];
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+
+  if (allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  }
+
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).json({});
+  }
+
+  next();
+});
+// ------------------------------------------------
 
 // API ROUTES
 app.use("/api/admin", adminRoutes);
@@ -82,7 +94,7 @@ app.use("/api/leaves", leaveRoutes);
 // ---------------- Serve Frontend in production ----------------
 if (process.env.NODE_ENV === "production") {
   const frontendPath = path.join(__dirname, "client/dist");
-  
+
   app.use(express.static(frontendPath));
 
   // Wildcard route - send frontend for unknown paths
@@ -92,7 +104,6 @@ if (process.env.NODE_ENV === "production") {
 }
 // ----------------------------------------------------------------
 
-// Test Route
 app.get("/", (req, res) => {
   res.send("CRM Backend Running 🚀");
 });
