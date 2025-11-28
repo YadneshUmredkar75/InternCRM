@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { toast, Toaster } from 'react-hot-toast';
 
-const API_URL = 'https://crm-c1y4.onrender.com/apiexpenses';
+const API_URL = 'https://crm-c1y4.onrender.com/api/expenses';
 
 export default function ExpenseManagement() {
   const [expenses, setExpenses] = useState([]);
