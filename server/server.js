@@ -22,11 +22,11 @@ import leaveRoutes from "./routes/leaveRoutes.js";
 
 dotenv.config();
 
-// Required for ESM directory path
+// For ESM dirname usage
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Connect DB
+// Connect Database
 connectDB();
 
 // Counter Initialize
@@ -50,23 +50,23 @@ initCounter();
 
 const app = express();
 
-// ---------------- CORS FIX FOR DEPLOYMENT ----------------
+// -------- CORS FIX --------
 app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://crm-khaki-eight.vercel.app" // ← frontend URL
+      "https://crm-khaki-eight.vercel.app", // deployed frontend
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-// ---------------------------------------------------------
+// --------------------------
 
 app.use(express.json());
 
-// API Routes
+// API ROUTES
 app.use("/api/admin", adminRoutes);
 app.use("/api/employee", employeeRoutes);
 app.use("/api/lead", leadRoutes);
@@ -79,9 +79,22 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/leaves", leaveRoutes);
 
-// Serve Test Route
+// ---------------- Serve Frontend in production ----------------
+if (process.env.NODE_ENV === "production") {
+  const frontendPath = path.join(__dirname, "client/dist");
+  
+  app.use(express.static(frontendPath));
+
+  // Wildcard route - send frontend for unknown paths
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(frontendPath, "index.html"));
+  });
+}
+// ----------------------------------------------------------------
+
+// Test Route
 app.get("/", (req, res) => {
-  res.send("CRM Backend is running 🚀");
+  res.send("CRM Backend Running 🚀");
 });
 
 // Global Error Handler
@@ -93,8 +106,8 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Server Port
+// Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Backend running on port: ${PORT}`);
+  console.log(`Backend Server Running on Port: ${PORT}`);
 });
