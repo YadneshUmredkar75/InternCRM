@@ -117,7 +117,7 @@ const EmployeeManagement = () => {
     year: new Date().getFullYear(), notes: ""
   });
 
-  const API_URL = "https://crm-c1y4.onrender.com";
+  const API_URL = "https://crm-c1y4.onrender.com/api/";
   const token = localStorage.getItem("adminToken");
 
   // Redirect if not logged in
