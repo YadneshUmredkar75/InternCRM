@@ -218,7 +218,7 @@ const EmployeeManagement = () => {
     setError("");
 
     try {
-      const response = await fetch(`${API_URL}/employee/get/employee`,);
+      const response = await fetch(`${API_URL}employee/get/employee`,);
 
       if (!response.ok) {
         if (response.status === 401) {
