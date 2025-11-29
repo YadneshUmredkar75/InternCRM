@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
 
-const API_URL = "https://crm-c1y4.onrender.com";
+const API_URL = "https://crm-c1y4.onrender.com/api";
 
 const PRIORITY_COLORS = {
     low: "bg-blue-100 text-blue-800 border border-blue-200",
@@ -76,35 +76,64 @@ const TaskAdmin = () => {
 
     const [showAddTask, setShowAddTask] = useState(false);
 
-    // Fetch all data
+    // Fixed fetch with correct API endpoints
     const fetchAllData = async () => {
         setLoading(true);
         setError(null);
 
         try {
-            // Fetch employees
-            const employeesRes = await fetch(`${API_URL}/employee/get/employee`);
+            console.log("Starting data fetch...");
+
+            // Fetch employees - CORRECTED ENDPOINT
+            const employeesEndpoint = `${API_URL}/employee/get/employee`;
+            console.log("Fetching employees from:", employeesEndpoint);
+
+            const employeesRes = await fetch(employeesEndpoint, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            console.log("Employees response status:", employeesRes.status);
+            console.log("Employees response ok:", employeesRes.ok);
+
             if (employeesRes.ok) {
                 const employeesData = await employeesRes.json();
-                setEmployees(employeesData.employees || []);
+                console.log("Employees data received:", employeesData);
+                setEmployees(employeesData.employees || employeesData || []);
             } else {
-                throw new Error("Failed to fetch employees");
+                // Try alternative endpoint
+                console.warn("Primary employees endpoint failed, trying alternative...");
+                const altRes = await fetch(`${API_URL}/employee`);
+                if (altRes.ok) {
+                    const altData = await altRes.json();
+                    console.log("Alternative endpoint worked:", altData);
+                    setEmployees(altData.employees || altData || []);
+                } else {
+                    throw new Error(`Failed to fetch employees: ${employeesRes.status}`);
+                }
             }
 
-            // Fetch all tasks
-            const tasksRes = await fetch(`${API_URL}/employee/task`);
+            // Fetch all tasks - CORRECTED ENDPOINT
+            const tasksEndpoint = `${API_URL}/employee/task`;
+            console.log("Fetching tasks from:", tasksEndpoint);
+
+            const tasksRes = await fetch(tasksEndpoint);
+            console.log("Tasks response status:", tasksRes.status);
+
             if (tasksRes.ok) {
                 const tasksData = await tasksRes.json();
-                console.log("Fetched tasks:", tasksData.tasks); // Debug log
-                setTasks(tasksData.tasks || []);
+                console.log("Tasks data received:", tasksData);
+                setTasks(tasksData.tasks || tasksData || []);
             } else {
-                throw new Error("Failed to fetch tasks");
+                throw new Error(`Failed to fetch tasks: ${tasksRes.status}`);
             }
 
         } catch (err) {
-            console.error("Fetch error:", err);
+            console.error("Fetch error details:", err);
             setError(err.message);
-            toast.error("Failed to load data");
+            toast.error(`Failed to load data: ${err.message}`);
         } finally {
             setLoading(false);
         }
@@ -113,6 +142,30 @@ const TaskAdmin = () => {
     useEffect(() => {
         fetchAllData();
     }, []);
+
+    // Test API endpoint directly (for debugging)
+    const testApiEndpoint = async () => {
+        try {
+            const testRes = await fetch(`${API_URL}/employee/get/employee`);
+            console.log("API Test Response:", {
+                status: testRes.status,
+                statusText: testRes.statusText,
+                url: testRes.url,
+                ok: testRes.ok
+            });
+
+            if (testRes.ok) {
+                const data = await testRes.json();
+                console.log("API Test Data:", data);
+                toast.success("API endpoint is working!");
+            } else {
+                toast.error(`API test failed: ${testRes.status} ${testRes.statusText}`);
+            }
+        } catch (error) {
+            console.error("API Test Error:", error);
+            toast.error(`API test error: ${error.message}`);
+        }
+    };
 
     // Filter tasks
     const filteredTasks = tasks.filter(task => {
@@ -141,7 +194,7 @@ const TaskAdmin = () => {
         });
     };
 
-    // Add new task
+    // Add new task - CORRECTED ENDPOINT
     const handleAddTask = async () => {
         if (!newTask.title.trim()) {
             toast.error("Title is required");
@@ -182,7 +235,7 @@ const TaskAdmin = () => {
         }
     };
 
-    // Update task
+    // Update task - CORRECTED ENDPOINT
     const handleUpdateTask = async (taskId, updates) => {
         try {
             const res = await fetch(`${API_URL}/employee/task/${taskId}`, {
@@ -205,7 +258,7 @@ const TaskAdmin = () => {
         }
     };
 
-    // Delete task
+    // Delete task - CORRECTED ENDPOINT
     const handleDeleteTask = async (taskId) => {
         if (!window.confirm("Are you sure you want to delete this task?")) return;
 
@@ -497,8 +550,33 @@ const TaskAdmin = () => {
                             <Download className="w-4 h-4" />
                             Export CSV
                         </button>
+                        {/* Debug button */}
+                        <button
+                            onClick={testApiEndpoint}
+                            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 flex items-center gap-2"
+                        >
+                            Test API
+                        </button>
                     </div>
                 </div>
+
+                {/* Debug Info */}
+                {error && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h4 className="text-red-800 font-semibold">Error Details:</h4>
+                                <p className="text-red-600 text-sm">{error}</p>
+                            </div>
+                            <button
+                                onClick={() => setError(null)}
+                                className="text-red-600 hover:text-red-800"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Enhanced Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
@@ -532,7 +610,7 @@ const TaskAdmin = () => {
                     </div>
                 </div>
 
-                {/* Add Task Modal - Remains the same as before */}
+                {/* Add Task Modal */}
                 {showAddTask && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                         <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
@@ -627,7 +705,7 @@ const TaskAdmin = () => {
                     </div>
                 )}
 
-                {/* Filters - Remains the same as before */}
+                {/* Filters */}
                 <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
