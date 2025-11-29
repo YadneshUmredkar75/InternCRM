@@ -22,63 +22,65 @@ import leaveRoutes from "./routes/leaveRoutes.js";
 
 dotenv.config();
 
-// Fix __dirname in ES modules
+// For ESM dirname usage
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// DB Connection
+// Connect Database
 connectDB();
 
-// Init Counter
+// Initialize Counter
 const initCounter = async () => {
   try {
     const counter = await Counter.findOne({ _id: "client_project_number" });
     if (!counter) {
       await Counter.create({ _id: "client_project_number", seq: 1000 });
       console.log("Counter initialized → Next project: PROJ-000001");
+    } else {
+      console.log(
+        `Counter exists → Next project: PROJ-${String(counter.seq + 1).padStart(6, "0")}`
+      );
     }
   } catch (err) {
-    console.error("Counter initialization failed:", err);
+    console.error("Failed to initialize counter:", err);
   }
 };
+
 initCounter();
 
 const app = express();
 
-// JSON Middleware
+// MUST COME BEFORE CORS (fixes JSON blocking)
 app.use(express.json());
 
-// Allowed Frontend URLs
+// ------------- FULL CORS FIX ----------------
 const allowedOrigins = [
+  "https://crm-b4yic2hsr-yadneshs-projects-d6a3e3e2.vercel.app",
   "http://localhost:5173",
   "https://crm-seven-jade.vercel.app",
-  "https://crm-r214yejox-yadneshs-projects-d6a3e3e2.vercel.app",
-  "https://crm-b4yic2hsr-yadneshs-projects-d6a3e3e2.vercel.app"
+  "https://crm-r214yejox-yadneshs-projects-d6a3e3e2.vercel.app", // your frontend
 ];
 
-// Full Dynamic CORS Middleware
 app.use((req, res, next) => {
   const origin = req.headers.origin;
 
   if (allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.header("Access-Control-Allow-Origin", origin);
   }
 
   res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
   if (req.method === "OPTIONS") {
-    return res.status(200).end();
+    return res.status(200).json({});
   }
 
   next();
 });
+// ------------------------------------------------
 
-// Express 5 Fix for wildcard OPTIONS
-app.options("/*", cors());
-
-// API Routes
+// API ROUTES
 app.use("/api/admin", adminRoutes);
 app.use("/api/employee", employeeRoutes);
 app.use("/api/lead", leadRoutes);
@@ -91,30 +93,34 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/leaves", leaveRoutes);
 
-// Serve Frontend in Production
+// ---------------- Serve Frontend in production ----------------
 if (process.env.NODE_ENV === "production") {
   const frontendPath = path.join(__dirname, "client/dist");
+
   app.use(express.static(frontendPath));
 
-  // Handle React refresh route support
-  app.get("/*", (req, res) => {
+  // Wildcard route - send frontend for unknown paths
+  app.get("*", (req, res) => {
     res.sendFile(path.join(frontendPath, "index.html"));
   });
 }
+// ----------------------------------------------------------------
 
-// Default Route
 app.get("/", (req, res) => {
-  res.send("🚀 CRM Backend is Live!");
+  res.send("CRM Backend Running 🚀");
 });
 
-// Error Handler
+// Global Error Handler
 app.use((err, req, res, next) => {
   console.error("Global Error:", err);
-  res.status(500).json({
+  res.status(err.status || 500).json({
     success: false,
     message: err.message || "Server Error",
   });
 });
 
+// Server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🔥 Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Backend Server Running on Port: ${PORT}`);
+});
