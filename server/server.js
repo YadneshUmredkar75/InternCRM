@@ -22,65 +22,61 @@ import leaveRoutes from "./routes/leaveRoutes.js";
 
 dotenv.config();
 
-// For ESM dirname usage
+// ESM __dirname fix
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Connect Database
+// Connect DB
 connectDB();
 
-// Initialize Counter
-const initCounter = async () => {
+// Initialize Counter (once)
+(async () => {
   try {
     const counter = await Counter.findOne({ _id: "client_project_number" });
     if (!counter) {
       await Counter.create({ _id: "client_project_number", seq: 1000 });
-      console.log("Counter initialized → Next project: PROJ-000001");
-    } else {
-      console.log(
-        `Counter exists → Next project: PROJ-${String(counter.seq + 1).padStart(6, "0")}`
-      );
+      console.log("Counter initialized → PROJ-000001");
     }
   } catch (err) {
-    console.error("Failed to initialize counter:", err);
+    console.error("Counter Init Error:", err);
   }
-};
-
-initCounter();
+})();
 
 const app = express();
 
-// MUST COME BEFORE CORS (fixes JSON blocking)
+// ----- MUST BE FIRST -----
 app.use(express.json());
 
-// ------------- FULL CORS FIX ----------------
+
+// -------------------- FIXED CORS CONFIG --------------------
 const allowedOrigins = [
-  "https://crm-b4yic2hsr-yadneshs-projects-d6a3e3e2.vercel.app",
   "http://localhost:5173",
   "https://crm-seven-jade.vercel.app",
-  "https://crm-r214yejox-yadneshs-projects-d6a3e3e2.vercel.app", // your frontend
+  "https://crm-b4yic2hsr-yadneshs-projects-d6a3e3e2.vercel.app",
+  "https://crm-r214yejox-yadneshs-projects-d6a3e3e2.vercel.app",
 ];
 
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS Blocked: ${origin}`));
+      }
+    },
+    credentials: true,
+    methods: "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
-  if (allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
-  }
+// Fix preflight (OPTIONS) requests
+app.options("*", cors());
+// ---------------------------------------------------------
 
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
-  if (req.method === "OPTIONS") {
-    return res.status(200).json({});
-  }
-
-  next();
-});
-// ------------------------------------------------
-
-// API ROUTES
+// ROUTES
 app.use("/api/admin", adminRoutes);
 app.use("/api/employee", employeeRoutes);
 app.use("/api/lead", leadRoutes);
@@ -93,34 +89,35 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/leaves", leaveRoutes);
 
-// ---------------- Serve Frontend in production ----------------
+
+// ---------- Serve Frontend in Production ----------
 if (process.env.NODE_ENV === "production") {
   const frontendPath = path.join(__dirname, "client/dist");
-
   app.use(express.static(frontendPath));
 
-  // Wildcard route - send frontend for unknown paths
   app.get("*", (req, res) => {
     res.sendFile(path.join(frontendPath, "index.html"));
   });
 }
-// ----------------------------------------------------------------
+// ---------------------------------------------------
 
+
+// Default Route
 app.get("/", (req, res) => {
-  res.send("CRM Backend Running 🚀");
+  res.send("🚀 CRM Backend Running Successfully");
 });
+
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-  console.error("Global Error:", err);
+  console.error("🔥 GLOBAL ERROR:", err);
   res.status(err.status || 500).json({
     success: false,
-    message: err.message || "Server Error",
+    message: err.message || "Internal Server Error",
   });
 });
 
-// Server
+
+// Start Server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Backend Server Running on Port: ${PORT}`);
-});
+app.listen(PORT, () => console.log(`🚀 Server Live On Port: ${PORT}`));
