@@ -4,7 +4,7 @@ import {
   getAll, createEmployee, updateEmployee, deleteEmployee,
   login, resetPassword, changePassword, getEmployeePassword,
   getTasks, addTask, updateTask, deleteTask, getEmployeeTasks, getEmployeeAttendance, getEmployeePerformance,
-  getEmployeeById, getCurrentEmployee, updateProfile
+  getEmployeeById, getCurrentEmployee, updateProfile,
 } from "../controllers/employeeController.js"; // Make sure the path is correct
 import { protectEmployee } from "../middleware/authEmployee.js";
 import { protect } from "../middleware/auth.js";

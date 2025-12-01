@@ -625,67 +625,32 @@ export const getTasks = async (req, res) => {
   }
 };
 
-export const addTask = async (req, res) => {
-  const {
-    title,
-    description,
-    priority = "Medium",
-    dueDate,
-    status = "Pending",
-    type = "Daily",
-    progress = 0,
-    notes = "",
-    employeeId
-  } = req.body;
-
-  if (!title?.trim()) {
-    return res.status(400).json({
-      success: false,
-      message: "Title is required",
-    });
-  }
-
+// In your backend task controller (addTask function)
+const addTask = async (req, res) => {
   try {
-    const task = await Task.create({
-      employeeId: employeeId || null,
-      title: title.trim(),
-      description: description?.trim() || "",
+    const { title, description, type, priority, progress, notes, employeeId } = req.body;
+
+    // If employeeId is "public-user", create task without employee reference
+    const taskData = {
+      title,
+      description,
       type,
-      status,
       priority,
       progress,
-      dueDate: dueDate ? new Date(dueDate) : null,
-      notes: notes?.trim() || "",
-      lastUpdated: new Date(),
-    });
+      notes,
+      ...(employeeId && employeeId !== "public-user" && { employeeId }) // Only add if valid
+    };
 
-    await task.populate("employeeId", "name email");
-
-    res.status(201).json({
-      success: true,
-      message: "Task created successfully",
-      task,
-    });
-  } catch (err) {
-    console.error("Add task error:", err);
-
-    if (err.name === "ValidationError") {
-      const errors = Object.values(err.errors).map((e) => e.message);
-      return res.status(400).json({
-        success: false,
-        message: "Validation failed",
-        errors,
-      });
-    }
-
-    res.status(500).json({
+    const task = await Task.create(taskData);
+    res.status(201).json({ success: true, task });
+  } catch (error) {
+    res.status(400).json({
       success: false,
-      message: "Server error",
-      error: err.message,
+      message: 'Validation failed',
+      errors: [error.message]
     });
   }
 };
-
 export const updateTask = async (req, res) => {
   const { id } = req.params;
   const updates = req.body;
