@@ -333,7 +333,7 @@ const DashboardEmployee = () => {
   const allMenuItems = [
     { path: "/employee/dashboard", label: "Dashboard", icon: <RiDashboardHorizontalFill /> },
     { path: "/employee/dashboard/students", label: "Students Attendance", icon: <FaUserGraduate /> },
-    { path: "/employee/dashboard/courses", label: "Course Management", icon: <FaFileSignature /> },
+    // { path: "/employee/dashboard/courses", label: "Course Management", icon: <FaFileSignature /> },
     { path: "/employee/dashboard/attendance", label: "My Attendance", icon: <FaBusinessTime /> },
     { path: "/employee/dashboard/QRstudentattendance", label: "Student QR Attendance", icon: <BsQrCodeScan /> },
     { path: "/employee/dashboard/leaverequest", label: "Leave Request", icon: <SiGoogleforms /> },
@@ -535,7 +535,7 @@ const DashboardEmployee = () => {
               {!isIntern && (
                 <>
                   <Route path="students" element={<StudentAttendance />} />
-                  <Route path="courses" element={<CourseManagement />} />
+                  {/* <Route path="courses" element={<CourseManagement />} /> */}
                   <Route path="QRstudentattendance" element={<QRStudentAttendance />} />
                 </>
               )}
