@@ -143,29 +143,7 @@ const TaskAdmin = () => {
         fetchAllData();
     }, []);
 
-    // Test API endpoint directly (for debugging)
-    const testApiEndpoint = async () => {
-        try {
-            const testRes = await fetch(`${API_URL}/employee/get/employee`);
-            console.log("API Test Response:", {
-                status: testRes.status,
-                statusText: testRes.statusText,
-                url: testRes.url,
-                ok: testRes.ok
-            });
 
-            if (testRes.ok) {
-                const data = await testRes.json();
-                console.log("API Test Data:", data);
-                toast.success("API endpoint is working!");
-            } else {
-                toast.error(`API test failed: ${testRes.status} ${testRes.statusText}`);
-            }
-        } catch (error) {
-            console.error("API Test Error:", error);
-            toast.error(`API test error: ${error.message}`);
-        }
-    };
 
     // Filter tasks
     const filteredTasks = tasks.filter(task => {
@@ -551,12 +529,7 @@ const TaskAdmin = () => {
                             Export CSV
                         </button>
                         {/* Debug button */}
-                        <button
-                            onClick={testApiEndpoint}
-                            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 flex items-center gap-2"
-                        >
-                            Test API
-                        </button>
+
                     </div>
                 </div>
 
