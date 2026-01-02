@@ -22,27 +22,28 @@ import leaveRoutes from "./routes/leaveRoutes.js";
 
 dotenv.config();
 
-// For ESM dirname usage
+// ESM dirname fix
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Connect Database
+// Connect MongoDB
 connectDB();
 
-// Initialize Counter
+// Initialize Counter (safe for production)
 const initCounter = async () => {
   try {
     const counter = await Counter.findOne({ _id: "client_project_number" });
+
     if (!counter) {
       await Counter.create({ _id: "client_project_number", seq: 1000 });
-      console.log("Counter initialized → Next project: PROJ-000001");
+      console.log("Counter initialized → PROJ-001001");
     } else {
       console.log(
         `Counter exists → Next project: PROJ-${String(counter.seq + 1).padStart(6, "0")}`
       );
     }
-  } catch (err) {
-    console.error("Failed to initialize counter:", err);
+  } catch (error) {
+    console.error("Failed to initialize counter:", error.message);
   }
 };
 
@@ -50,37 +51,41 @@ initCounter();
 
 const app = express();
 
-// MUST COME BEFORE CORS (fixes JSON blocking)
+// Parse JSON
 app.use(express.json());
 
-// ------------- FULL CORS FIX ----------------
+// -------------------- CORS CONFIG --------------------
 const allowedOrigins = [
-  // "https://crm-b4yic2hsr-yadneshs-projects-d6a3e3e2.vercel.app",
   "http://localhost:5173",
-  // "https://crm-seven-jade.vercel.app",
-  // "https://crm-r214yejox-yadneshs-projects-d6a3e3e2.vercel.app", // your frontend
+  "https://ssinternscrm.netlify.app",
 ];
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;
 
   if (allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Origin", origin);
   }
 
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+  );
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
 
   if (req.method === "OPTIONS") {
-    return res.status(200).json({});
+    return res.sendStatus(200);
   }
 
   next();
 });
-// ------------------------------------------------
+// ----------------------------------------------------
 
-// API ROUTES
+// API Routes
 app.use("/api/admin", adminRoutes);
 app.use("/api/employee", employeeRoutes);
 app.use("/api/lead", leadRoutes);
@@ -93,19 +98,19 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/leaves", leaveRoutes);
 
-// ---------------- Serve Frontend in production ----------------
+// -------- Serve Frontend (Optional: if bundled) -------
 if (process.env.NODE_ENV === "production") {
   const frontendPath = path.join(__dirname, "client/dist");
 
   app.use(express.static(frontendPath));
 
-  // Wildcard route - send frontend for unknown paths
   app.get("*", (req, res) => {
     res.sendFile(path.join(frontendPath, "index.html"));
   });
 }
-// ----------------------------------------------------------------
+// ----------------------------------------------------
 
+// Health check
 app.get("/", (req, res) => {
   res.send("CRM Backend Running 🚀");
 });
@@ -119,7 +124,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Server
+// Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Backend Server Running on Port: ${PORT}`);
