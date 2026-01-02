@@ -4,7 +4,7 @@ import toast, { Toaster } from "react-hot-toast";
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://crm-c1y4.onrender.com/api", // ADDED /api HERE
+  baseURL: "http://localhost:5000/api", // ADDED /api HERE
 });
 
 // Add token to every request

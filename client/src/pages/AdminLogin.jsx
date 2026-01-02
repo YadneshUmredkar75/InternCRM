@@ -22,8 +22,8 @@ const AdminLogin = () => {
     }
 
     try {
-      // Vite proxy → /api/admin/login → https://crm-c1y4.onrender.com/api/admin/login
-      const res = await fetch("https://crm-c1y4.onrender.com/api/admin/login", {
+      // Vite proxy → /api/admin/login → http://localhost:5000/api/admin/login
+      const res = await fetch("http://localhost:5000/api/admin/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
